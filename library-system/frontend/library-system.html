@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Libraria — Digital Library Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+:root {
+  --ink: #1a1a2e;
+  --ink-light: #2d2d44;
+  --paper: #f8f6f1;
+  --paper-dark: #ede9e0;
+  --gold: #c9a84c;
+  --gold-light: #f0d687;
+  --gold-dark: #a07830;
+  --rust: #c0432f;
+  --sage: #4a7c6f;
+  --lavender: #7c6fb5;
+  --muted: #8a8599;
+  --border: #e0dbd0;
+  --success: #2d7d4f;
+  --warning: #c07b28;
+  --danger: #b03030;
+  --white: #ffffff;
+  --card-shadow: 0 4px 24px rgba(26,26,46,0.08);
+  --card-shadow-hover: 0 8px 40px rgba(26,26,46,0.14);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+h1, h2, h3 { font-family: 'Playfair Display', serif; }
+.app { display: flex; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  background: var(--ink);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+.sidebar-logo {
+  padding: 28px 24px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-logo h1 {
+  font-size: 1.6rem;
+  color: var(--gold);
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.sidebar-logo p { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 4px; letter-spacing: 1.5px; text-transform: uppercase; }
+.sidebar-nav { padding: 16px 12px; flex: 1; overflow-y: auto; }
+.nav-section { margin-bottom: 24px; }
+.nav-section-title { font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.3); padding: 0 12px 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  font-size: 0.875rem; color: rgba(255,255,255,0.65);
+  transition: all 0.2s; margin-bottom: 2px; text-decoration: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.nav-item.active { background: rgba(201,168,76,0.15); color: var(--gold); }
+.nav-item .icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.8; }
+.nav-item.active .icon { opacity: 1; }
+.sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+.status-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: rgba(255,255,255,0.4); }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); box-shadow: 0 0 0 2px rgba(74,124,111,0.3); }
+
+/* Main content */
+.main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--ink); }
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+.content { padding: 28px 32px; flex: 1; }
+
+/* Cards */
+.card {
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.card:hover { box-shadow: var(--card-shadow-hover); }
+.card-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--ink); }
+.card-body { padding: 22px; }
+
+/* Stats grid */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--white);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 20px;
+  display: flex; align-items: flex-start; gap: 14px;
+  transition: all 0.2s;
+  cursor: default;
+}
+.stat-card:hover { box-shadow: var(--card-shadow-hover); transform: translateY(-2px); }
+.stat-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.stat-content { flex: 1; }
+.stat-value { font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 700; line-height: 1.1; }
+.stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 3px; }
+.stat-change { font-size: 0.75rem; margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: 8px; font-size: 0.875rem;
+  font-weight: 500; border: none; cursor: pointer;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--ink); color: var(--white); }
+.btn-primary:hover:not(:disabled) { background: var(--ink-light); }
+.btn-gold { background: var(--gold); color: var(--ink); }
+.btn-gold:hover:not(:disabled) { background: var(--gold-dark); color: #fff; }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+.btn-ghost:hover:not(:disabled) { background: var(--paper); }
+.btn-danger { background: transparent; color: var(--danger); border: 1px solid #f0d0d0; }
+.btn-danger:hover:not(:disabled) { background: #fff5f5; }
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover:not(:disabled) { background: #236040; }
+
+/* Badge */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 0.73rem; font-weight: 500; letter-spacing: 0.3px;
+}
+.badge-available { background: #e8f5ee; color: var(--success); }
+.badge-issued { background: #fff3e0; color: var(--warning); }
+.badge-overdue { background: #fde8e8; color: var(--danger); }
+.badge-returned { background: #e8f0fe; color: #3b5bdb; }
+.badge-default { background: var(--paper-dark); color: var(--muted); }
+
+/* Table */
+.table-wrapper { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { border-bottom: 2px solid var(--border); }
+th { padding: 10px 14px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); text-align: left; white-space: nowrap; }
+td { padding: 13px 14px; font-size: 0.875rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr:hover { background: var(--paper); }
+tbody tr:last-child td { border-bottom: none; }
+
+/* Form */
+.form-group { margin-bottom: 18px; }
+.form-label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--ink-light); margin-bottom: 6px; }
+.form-input {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 0.875rem; font-family: 'DM Sans', sans-serif;
+  background: var(--white); color: var(--ink); outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+.form-input.error { border-color: var(--danger); }
+.form-error { font-size: 0.75rem; color: var(--danger); margin-top: 4px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(26,26,46,0.5);
+  backdrop-filter: blur(4px); z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+.modal {
+  background: var(--white); border-radius: 16px;
+  width: 100%; max-width: 580px; max-height: 90vh;
+  overflow-y: auto; box-shadow: 0 20px 80px rgba(26,26,46,0.2);
+  animation: slideUp 0.25s ease;
+}
+.modal-lg { max-width: 720px; }
+.modal-header { padding: 22px 24px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; }
+.modal-body { padding: 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+.modal-close { background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; border-radius: 4px; transition: color 0.2s; }
+.modal-close:hover { color: var(--ink); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* Search bar */
+.search-bar {
+  position: relative; flex: 1; max-width: 360px;
+}
+.search-bar input {
+  width: 100%; padding: 9px 14px 9px 38px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 0.875rem; background: var(--paper);
+  font-family: 'DM Sans', sans-serif; outline: none;
+  transition: all 0.2s;
+}
+.search-bar input:focus { border-color: var(--gold); background: var(--white); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+.search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+
+/* Toast */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast {
+  padding: 13px 18px; border-radius: 10px; font-size: 0.875rem;
+  display: flex; align-items: center; gap: 10px; min-width: 280px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  animation: toastIn 0.3s ease;
+}
+.toast-success { background: #1a3d2b; color: #7eddaa; }
+.toast-error { background: #3d1a1a; color: #f0a0a0; }
+.toast-info { background: var(--ink); color: var(--gold-light); }
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* Tags */
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 6px; font-size: 0.73rem;
+  background: var(--paper-dark); color: var(--ink-light);
+}
+.priority-urgent { background: #fde8e8; color: var(--danger); }
+.priority-high { background: #fff3e0; color: var(--warning); }
+.priority-normal { background: #e8f5ee; color: var(--success); }
+.priority-low { background: var(--paper-dark); color: var(--muted); }
+
+/* Note card */
+.note-card {
+  background: var(--white); border-radius: 10px;
+  border: 1px solid var(--border); padding: 18px;
+  transition: all 0.2s; position: relative;
+}
+.note-card:hover { box-shadow: var(--card-shadow); }
+.note-card.pinned { border-left: 3px solid var(--gold); }
+
+/* Activity feed */
+.activity-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+.activity-text { font-size: 0.82rem; color: var(--ink-light); line-height: 1.5; }
+.activity-time { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+/* Pagination */
+.pagination { display: flex; align-items: center; gap: 6px; }
+.page-btn { width: 34px; height: 34px; border-radius: 7px; border: 1px solid var(--border); background: var(--white); cursor: pointer; font-size: 0.875rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.page-btn:hover { border-color: var(--gold); color: var(--gold-dark); }
+.page-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Category color dot */
+.color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty-state svg { opacity: 0.3; margin-bottom: 12px; }
+.empty-state p { font-size: 0.9rem; }
+
+/* Loading spinner */
+.spinner {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid var(--border);
+  border-top-color: var(--gold);
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-center { display: flex; justify-content: center; align-items: center; padding: 60px; }
+
+/* Responsive */
+@media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .content { padding: 20px 16px; }
+}
+@media (max-width: 640px) { .stats-grid { grid-template-columns: 1fr 1fr; } .form-grid { grid-template-columns: 1fr; } }
+
+/* Fine display */
+.fine-display { background: #fff8e1; border: 1.5px solid #ffd54f; border-radius: 10px; padding: 16px; text-align: center; }
+.fine-amount { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--warning); }
+.fine-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+.topbar-sep { width: 1px; height: 24px; background: var(--border); }
+.flex { display: flex; } .items-center { align-items: center; } .gap-2 { gap: 8px; } .gap-3 { gap: 12px; }
+.justify-between { justify-content: space-between; } .flex-1 { flex: 1; }
+.text-sm { font-size: 0.875rem; } .text-xs { font-size: 0.75rem; }
+.text-muted { color: var(--muted); } .font-medium { font-weight: 500; }
+.mt-1 { margin-top: 4px; } .mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; }
+.mb-4 { margin-bottom: 16px; } .mb-6 { margin-bottom: 24px; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, createContext, useContext } = React;
+
+// ==================== DATA STORE (mock backend) ====================
+const DB = {
+  categories: [
+    { id: 'cat1', name: 'Fiction', description: 'Novels and creative literature', color: '#8B5CF6', book_count: 3 },
+    { id: 'cat2', name: 'Science & Technology', description: 'Scientific research and computing', color: '#3B82F6', book_count: 4 },
+    { id: 'cat3', name: 'History & Politics', description: 'World history and governance', color: '#EF4444', book_count: 2 },
+    { id: 'cat4', name: 'Arts & Humanities', description: 'Art, music, and philosophy', color: '#F59E0B', book_count: 1 },
+    { id: 'cat5', name: 'Business & Economics', description: 'Business and finance', color: '#10B981', book_count: 2 },
+    { id: 'cat6', name: 'Health & Medicine', description: 'Medical sciences and wellness', color: '#EC4899', book_count: 1 },
+  ],
+  subjects: [
+    { id: 'sub1', name: 'World Literature', description: 'Classic world literature', category_id: 'cat1', category_name: 'Fiction', book_count: 2 },
+    { id: 'sub2', name: 'Mystery & Thriller', description: 'Crime fiction and thrillers', category_id: 'cat1', category_name: 'Fiction', book_count: 2 },
+    { id: 'sub3', name: 'Computer Science', description: 'Programming and software', category_id: 'cat2', category_name: 'Science & Technology', book_count: 3 },
+    { id: 'sub4', name: 'Physics & Mathematics', description: 'Advanced physics and math', category_id: 'cat2', category_name: 'Science & Technology', book_count: 1 },
+    { id: 'sub5', name: 'Modern History', description: 'Contemporary history', category_id: 'cat3', category_name: 'History & Politics', book_count: 1 },
+    { id: 'sub6', name: 'Ancient History', description: 'Ancient civilizations', category_id: 'cat3', category_name: 'History & Politics', book_count: 1 },
+    { id: 'sub7', name: 'Philosophy', description: 'Classical philosophy', category_id: 'cat4', category_name: 'Arts & Humanities', book_count: 1 },
+    { id: 'sub8', name: 'Entrepreneurship', description: 'Business innovation', category_id: 'cat5', category_name: 'Business & Economics', book_count: 1 },
+    { id: 'sub9', name: 'Marketing', description: 'Marketing strategies', category_id: 'cat5', category_name: 'Business & Economics', book_count: 1 },
+  ],
+  books: [
+    { id: 'bk1', title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', isbn: '978-0-7432-7356-5', category_id: 'cat1', category_name: 'Fiction', category_color: '#8B5CF6', subject_id: 'sub1', subject_name: 'World Literature', total_quantity: 3, available_quantity: 2, rack_number: 'A-101', publisher: 'Scribner', published_year: 1925, status: 'available', description: 'A story of the fabulously wealthy Jay Gatsby.' },
+    { id: 'bk2', title: 'To Kill a Mockingbird', author: 'Harper Lee', isbn: '978-0-06-112008-4', category_id: 'cat1', category_name: 'Fiction', category_color: '#8B5CF6', subject_id: 'sub1', subject_name: 'World Literature', total_quantity: 4, available_quantity: 3, rack_number: 'A-102', publisher: 'HarperCollins', published_year: 1960, status: 'available', description: 'A classic dealing with racial injustice and moral growth.' },
+    { id: 'bk3', title: '1984', author: 'George Orwell', isbn: '978-0-452-28423-4', category_id: 'cat1', category_name: 'Fiction', category_color: '#8B5CF6', subject_id: 'sub2', subject_name: 'Mystery & Thriller', total_quantity: 5, available_quantity: 0, rack_number: 'A-103', publisher: 'Signet Classic', published_year: 1949, status: 'issued', description: 'A dystopian novel about a totalitarian society.' },
+    { id: 'bk4', title: 'Clean Code', author: 'Robert C. Martin', isbn: '978-0-13-235088-4', category_id: 'cat2', category_name: 'Science & Technology', category_color: '#3B82F6', subject_id: 'sub3', subject_name: 'Computer Science', total_quantity: 6, available_quantity: 5, rack_number: 'B-201', publisher: 'Prentice Hall', published_year: 2008, status: 'available', description: 'A handbook of agile software craftsmanship.' },
+    { id: 'bk5', title: 'The Pragmatic Programmer', author: 'David Thomas', isbn: '978-0-13-595705-9', category_id: 'cat2', category_name: 'Science & Technology', category_color: '#3B82F6', subject_id: 'sub3', subject_name: 'Computer Science', total_quantity: 4, available_quantity: 1, rack_number: 'B-202', publisher: 'Addison-Wesley', published_year: 2019, status: 'available', description: 'A guide to pragmatic programming practices.' },
+    { id: 'bk6', title: 'A Brief History of Time', author: 'Stephen Hawking', isbn: '978-0-553-38016-3', category_id: 'cat2', category_name: 'Science & Technology', category_color: '#3B82F6', subject_id: 'sub4', subject_name: 'Physics & Mathematics', total_quantity: 3, available_quantity: 0, rack_number: 'B-301', publisher: 'Bantam', published_year: 1988, status: 'overdue', description: 'An overview of cosmology for general readers.' },
+    { id: 'bk7', title: 'Sapiens', author: 'Yuval Noah Harari', isbn: '978-0-06-231609-7', category_id: 'cat3', category_name: 'History & Politics', category_color: '#EF4444', subject_id: 'sub5', subject_name: 'Modern History', total_quantity: 5, available_quantity: 2, rack_number: 'C-101', publisher: 'HarperCollins', published_year: 2011, status: 'available', description: 'A brief history of humankind.' },
+    { id: 'bk8', title: 'The Art of War', author: 'Sun Tzu', isbn: '978-1-59030-225-5', category_id: 'cat3', category_name: 'History & Politics', category_color: '#EF4444', subject_id: 'sub6', subject_name: 'Ancient History', total_quantity: 4, available_quantity: 4, rack_number: 'C-201', publisher: 'Shambhala', published_year: -500, status: 'available', description: 'An ancient Chinese military treatise.' },
+    { id: 'bk9', title: 'Think and Grow Rich', author: 'Napoleon Hill', isbn: '978-1-58542-433-7', category_id: 'cat5', category_name: 'Business & Economics', category_color: '#10B981', subject_id: 'sub8', subject_name: 'Entrepreneurship', total_quantity: 3, available_quantity: 0, rack_number: 'E-101', publisher: 'TarcherPerigee', published_year: 1937, status: 'issued', description: 'Classic personal development and success principles.' },
+    { id: 'bk10', title: 'The Da Vinci Code', author: 'Dan Brown', isbn: '978-0-385-50420-5', category_id: 'cat1', category_name: 'Fiction', category_color: '#8B5CF6', subject_id: 'sub2', subject_name: 'Mystery & Thriller', total_quantity: 6, available_quantity: 5, rack_number: 'A-201', publisher: 'Doubleday', published_year: 2003, status: 'available', description: 'A mystery thriller involving a Harvard professor.' },
+    { id: 'bk11', title: 'JavaScript: The Good Parts', author: 'Douglas Crockford', isbn: '978-0-596-51774-8', category_id: 'cat2', category_name: 'Science & Technology', category_color: '#3B82F6', subject_id: 'sub3', subject_name: 'Computer Science', total_quantity: 5, available_quantity: 4, rack_number: 'B-203', publisher: "O'Reilly Media", published_year: 2008, status: 'available', description: 'Explores the best features of JavaScript.' },
+    { id: 'bk12', title: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', isbn: '978-0-374-53355-7', category_id: 'cat4', category_name: 'Arts & Humanities', category_color: '#F59E0B', subject_id: 'sub7', subject_name: 'Philosophy', total_quantity: 4, available_quantity: 3, rack_number: 'D-101', publisher: 'FSG', published_year: 2011, status: 'available', description: 'An examination of two systems of thought that drive decision-making.' },
+  ],
+  library_users: [
+    { id: 'u1', name: 'Alice Johnson', email: 'alice.j@library.edu', phone: '555-0101', member_id: 'MEM-001', user_type: 'student', department: 'Computer Science', active: true },
+    { id: 'u2', name: 'Bob Smith', email: 'bob.s@library.edu', phone: '555-0102', member_id: 'MEM-002', user_type: 'student', department: 'Literature', active: true },
+    { id: 'u3', name: 'Carol White', email: 'carol.w@library.edu', phone: '555-0103', member_id: 'MEM-003', user_type: 'faculty', department: 'History', active: true },
+    { id: 'u4', name: 'David Brown', email: 'david.b@library.edu', phone: '555-0104', member_id: 'MEM-004', user_type: 'student', department: 'Physics', active: true },
+    { id: 'u5', name: 'Emma Davis', email: 'emma.d@library.edu', phone: '555-0105', member_id: 'MEM-005', user_type: 'staff', department: 'Administration', active: true },
+    { id: 'u6', name: 'Frank Wilson', email: 'frank.w@library.edu', phone: '555-0106', member_id: 'MEM-006', user_type: 'student', department: 'Business', active: true },
+  ],
+  transactions: [
+    { id: 'tx1', book_id: 'bk3', book_title: '1984', isbn: '978-0-452-28423-4', user_id: 'u1', user_name: 'Alice Johnson', member_id: 'MEM-001', issue_date: new Date(Date.now() - 10*86400000).toISOString(), due_date: new Date(Date.now() + 4*86400000).toISOString(), return_date: null, status: 'issued', fine_amount: 0, issued_by: 'Librarian' },
+    { id: 'tx2', book_id: 'bk6', book_title: 'A Brief History of Time', isbn: '978-0-553-38016-3', user_id: 'u2', user_name: 'Bob Smith', member_id: 'MEM-002', issue_date: new Date(Date.now() - 22*86400000).toISOString(), due_date: new Date(Date.now() - 8*86400000).toISOString(), return_date: null, status: 'overdue', fine_amount: 8, issued_by: 'Librarian' },
+    { id: 'tx3', book_id: 'bk9', book_title: 'Think and Grow Rich', isbn: '978-1-58542-433-7', user_id: 'u4', user_name: 'David Brown', member_id: 'MEM-004', issue_date: new Date(Date.now() - 5*86400000).toISOString(), due_date: new Date(Date.now() + 9*86400000).toISOString(), return_date: null, status: 'issued', fine_amount: 0, issued_by: 'Librarian' },
+    { id: 'tx4', book_id: 'bk1', book_title: 'The Great Gatsby', isbn: '978-0-7432-7356-5', user_id: 'u3', user_name: 'Carol White', member_id: 'MEM-003', issue_date: new Date(Date.now() - 18*86400000).toISOString(), due_date: new Date(Date.now() - 4*86400000).toISOString(), return_date: new Date(Date.now() - 1*86400000).toISOString(), status: 'returned', fine_amount: 3, issued_by: 'Librarian', returned_by: 'Librarian' },
+  ],
+  notes: [
+    { id: 'n1', title: 'Quarterly Audit Reminder', content: 'Conduct physical inventory count this Friday. Check all rack numbers and update quantities in the system.', priority: 'high', tags: ['audit', 'inventory'], pinned: true, created_at: new Date(Date.now() - 2*86400000).toISOString(), updated_at: new Date(Date.now() - 2*86400000).toISOString() },
+    { id: 'n2', title: 'New Book Arrivals', content: '15 new Computer Science books arriving next week. Prepare rack B-204 and update catalog accordingly.', priority: 'normal', tags: ['arrivals', 'cs'], pinned: false, created_at: new Date(Date.now() - 5*86400000).toISOString(), updated_at: new Date(Date.now() - 5*86400000).toISOString() },
+    { id: 'n3', title: 'Overdue Follow-up', content: 'Send reminder emails to all users with books overdue more than 7 days. Fine waivers require supervisor approval.', priority: 'urgent', tags: ['overdue', 'reminders'], pinned: true, created_at: new Date(Date.now() - 1*86400000).toISOString(), updated_at: new Date(Date.now() - 1*86400000).toISOString() },
+    { id: 'n4', title: 'Reading Club Schedule', content: 'Next reading club meeting on the 15th. Current book: Sapiens by Yuval Harari. Register participants.', priority: 'low', tags: ['events', 'reading-club'], pinned: false, created_at: new Date(Date.now() - 7*86400000).toISOString(), updated_at: new Date(Date.now() - 7*86400000).toISOString() },
+  ],
+  activityLog: [
+    { id: 'al1', action_type: 'BOOK_RETURNED', description: '"The Great Gatsby" returned by Carol White | Fine: $3.00', created_at: new Date(Date.now() - 1*86400000).toISOString() },
+    { id: 'al2', action_type: 'BOOK_ISSUED', description: '"Think and Grow Rich" issued to David Brown (MEM-004)', created_at: new Date(Date.now() - 5*86400000).toISOString() },
+    { id: 'al3', action_type: 'BOOK_ADDED', description: 'New book added: Thinking, Fast and Slow by Daniel Kahneman', created_at: new Date(Date.now() - 6*86400000).toISOString() },
+    { id: 'al4', action_type: 'BOOK_ISSUED', description: '"1984" issued to Alice Johnson (MEM-001)', created_at: new Date(Date.now() - 10*86400000).toISOString() },
+    { id: 'al5', action_type: 'BOOK_ISSUED', description: '"A Brief History of Time" issued to Bob Smith (MEM-002)', created_at: new Date(Date.now() - 22*86400000).toISOString() },
+  ],
+  settings: { fine_per_day: 1.00, loan_period_days: 14, max_books_per_user: 5 }
+};
+
+// ==================== CONTEXT ====================
+const AppContext = createContext();
+const useApp = () => useContext(AppContext);
+
+function AppProvider({ children }) {
+  const [books, setBooks] = useState(DB.books);
+  const [categories, setCategories] = useState(DB.categories);
+  const [subjects, setSubjects] = useState(DB.subjects);
+  const [users, setUsers] = useState(DB.library_users);
+  const [transactions, setTransactions] = useState(DB.transactions);
+  const [notes, setNotes] = useState(DB.notes);
+  const [activityLog, setActivityLog] = useState(DB.activityLog);
+  const [settings, setSettings] = useState(DB.settings);
+  const [toasts, setToasts] = useState([]);
+
+  const toast = useCallback((msg, type = 'info') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, msg, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  }, []);
+
+  const addActivity = useCallback((action_type, description) => {
+    const entry = { id: `al${Date.now()}`, action_type, description, created_at: new Date().toISOString() };
+    setActivityLog(prev => [entry, ...prev]);
+  }, []);
+
+  // Books CRUD
+  const addBook = useCallback((book) => {
+    const newBook = { ...book, id: `bk${Date.now()}`, status: 'available', created_at: new Date().toISOString() };
+    const cat = categories.find(c => c.id === book.category_id);
+    const sub = subjects.find(s => s.id === book.subject_id);
+    newBook.category_name = cat?.name || '';
+    newBook.category_color = cat?.color || '#6B7280';
+    newBook.subject_name = sub?.name || '';
+    newBook.available_quantity = book.total_quantity;
+    setBooks(prev => [newBook, ...prev]);
+    addActivity('BOOK_ADDED', `New book added: ${book.title} by ${book.author}`);
+    toast(`"${book.title}" added successfully!`, 'success');
+    return newBook;
+  }, [categories, subjects, addActivity, toast]);
+
+  const updateBook = useCallback((id, updates) => {
+    const cat = categories.find(c => c.id === updates.category_id);
+    const sub = subjects.find(s => s.id === updates.subject_id);
+    setBooks(prev => prev.map(b => b.id === id ? { ...b, ...updates, category_name: cat?.name || b.category_name, category_color: cat?.color || b.category_color, subject_name: sub?.name || b.subject_name } : b));
+    toast('Book updated successfully!', 'success');
+  }, [categories, subjects, toast]);
+
+  const deleteBook = useCallback((id) => {
+    const hasActive = transactions.some(t => t.book_id === id && ['issued','overdue'].includes(t.status));
+    if (hasActive) { toast('Cannot delete book with active transactions', 'error'); return false; }
+    setBooks(prev => prev.filter(b => b.id !== id));
+    toast('Book deleted successfully', 'success');
+    return true;
+  }, [transactions, toast]);
+
+  // Categories CRUD
+  const addCategory = useCallback((cat) => {
+    const newCat = { ...cat, id: `cat${Date.now()}`, book_count: 0 };
+    setCategories(prev => [...prev, newCat]);
+    toast(`Category "${cat.name}" created!`, 'success');
+  }, [toast]);
+
+  const updateCategory = useCallback((id, updates) => {
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+    setBooks(prev => prev.map(b => b.category_id === id ? { ...b, category_name: updates.name, category_color: updates.color } : b));
+    toast('Category updated!', 'success');
+  }, [toast]);
+
+  const deleteCategory = useCallback((id) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+    setBooks(prev => prev.map(b => b.category_id === id ? { ...b, category_id: null, category_name: '' } : b));
+    toast('Category deleted', 'success');
+  }, [toast]);
+
+  // Subjects CRUD
+  const addSubject = useCallback((sub) => {
+    const cat = categories.find(c => c.id === sub.category_id);
+    const newSub = { ...sub, id: `sub${Date.now()}`, book_count: 0, category_name: cat?.name || '' };
+    setSubjects(prev => [...prev, newSub]);
+    toast(`Subject "${sub.name}" created!`, 'success');
+  }, [categories, toast]);
+
+  const updateSubject = useCallback((id, updates) => {
+    const cat = categories.find(c => c.id === updates.category_id);
+    setSubjects(prev => prev.map(s => s.id === id ? { ...s, ...updates, category_name: cat?.name || s.category_name } : s));
+    setBooks(prev => prev.map(b => b.subject_id === id ? { ...b, subject_name: updates.name } : b));
+    toast('Subject updated!', 'success');
+  }, [categories, toast]);
+
+  const deleteSubject = useCallback((id) => {
+    setSubjects(prev => prev.filter(s => s.id !== id));
+    toast('Subject deleted', 'success');
+  }, [toast]);
+
+  // Checkout
+  const checkoutBook = useCallback((book_id, user_id) => {
+    const book = books.find(b => b.id === book_id);
+    const user = users.find(u => u.id === user_id);
+    if (!book || book.available_quantity <= 0) { toast('Book not available', 'error'); return null; }
+    const activeCount = transactions.filter(t => t.user_id === user_id && ['issued','overdue'].includes(t.status)).length;
+    if (activeCount >= settings.max_books_per_user) { toast(`Max ${settings.max_books_per_user} books per user`, 'error'); return null; }
+    const dueDate = new Date(); dueDate.setDate(dueDate.getDate() + settings.loan_period_days);
+    const tx = {
+      id: `tx${Date.now()}`, book_id, user_id,
+      book_title: book.title, isbn: book.isbn,
+      user_name: user.name, member_id: user.member_id,
+      issue_date: new Date().toISOString(),
+      due_date: dueDate.toISOString(),
+      return_date: null, status: 'issued', fine_amount: 0, issued_by: 'Librarian'
+    };
+    setTransactions(prev => [tx, ...prev]);
+    setBooks(prev => prev.map(b => b.id === book_id ? {
+      ...b,
+      available_quantity: b.available_quantity - 1,
+      status: b.available_quantity - 1 === 0 ? 'issued' : 'available'
+    } : b));
+    addActivity('BOOK_ISSUED', `"${book.title}" issued to ${user.name} (${user.member_id})`);
+    toast(`"${book.title}" issued to ${user.name}!`, 'success');
+    return tx;
+  }, [books, users, transactions, settings, addActivity, toast]);
+
+  // Return
+  const returnBook = useCallback((transaction_id) => {
+    const tx = transactions.find(t => t.id === transaction_id);
+    if (!tx) return null;
+    const now = new Date();
+    const due = new Date(tx.due_date);
+    let fine = 0;
+    if (now > due) {
+      const daysLate = Math.ceil((now - due) / 86400000);
+      fine = daysLate * settings.fine_per_day;
+    }
+    setTransactions(prev => prev.map(t => t.id === transaction_id ? {
+      ...t, status: 'returned', return_date: now.toISOString(), fine_amount: fine, returned_by: 'Librarian'
+    } : t));
+    setBooks(prev => prev.map(b => b.id === tx.book_id ? {
+      ...b, available_quantity: b.available_quantity + 1, status: 'available'
+    } : b));
+    addActivity('BOOK_RETURNED', `"${tx.book_title}" returned by ${tx.user_name}${fine > 0 ? ` | Fine: $${fine.toFixed(2)}` : ''}`);
+    return { fine, transaction: tx };
+  }, [transactions, settings, addActivity]);
+
+  // Notes CRUD
+  const addNote = useCallback((note) => {
+    const n = { ...note, id: `n${Date.now()}`, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    setNotes(prev => [n, ...prev]);
+    toast('Note added!', 'success');
+  }, [toast]);
+
+  const updateNote = useCallback((id, updates) => {
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, ...updates, updated_at: new Date().toISOString() } : n));
+    toast('Note updated!', 'success');
+  }, [toast]);
+
+  const deleteNote = useCallback((id) => {
+    setNotes(prev => prev.filter(n => n.id !== id));
+    toast('Note deleted', 'success');
+  }, [toast]);
+
+  // Add User
+  const addUser = useCallback((user) => {
+    const newUser = { ...user, id: `u${Date.now()}`, active: true, created_at: new Date().toISOString() };
+    setUsers(prev => [newUser, ...prev]);
+    toast(`User ${user.name} added!`, 'success');
+  }, [toast]);
+
+  const updateSettings = useCallback((s) => {
+    setSettings(s);
+    toast('Settings saved!', 'success');
+  }, [toast]);
+
+  return (
+    <AppContext.Provider value={{
+      books, categories, subjects, users, transactions, notes, activityLog, settings, toasts,
+      addBook, updateBook, deleteBook,
+      addCategory, updateCategory, deleteCategory,
+      addSubject, updateSubject, deleteSubject,
+      checkoutBook, returnBook,
+      addNote, updateNote, deleteNote,
+      addUser, updateSettings, toast,
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+// ==================== ICONS ====================
+const Icon = ({ name, size = 16, className = '' }) => {
+  const icons = {
+    book: <path d="M4 2h14a2 2 0 012 2v16a2 2 0 01-2 2H4a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h14V4H4zm2 3h10v2H6V7zm0 4h10v2H6v-2zm0 4h7v2H6v-2z"/>,
+    dashboard: <><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></>,
+    tag: <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82zM7 7h.01"/>,
+    subject: <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>,
+    users: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></>,
+    transaction: <><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></>,
+    note: <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>,
+    settings: <><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></>,
+    plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+    edit: <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>,
+    trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></>,
+    search: <><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
+    x: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+    check: <polyline points="20 6 9 17 4 12"/>,
+    alert: <><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
+    arrowLeft: <><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>,
+    arrowRight: <><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>,
+    pin: <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>,
+    filter: <><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></>,
+    info: <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>,
+    clock: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+    dollar: <><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></>,
+    bookOpen: <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>,
+    menu: <><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>,
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} style={{flexShrink:0}}>
+      {icons[name]}
+    </svg>
+  );
+};
+
+// ==================== UTILITIES ====================
+const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+const timeAgo = (d) => {
+  const diff = Date.now() - new Date(d).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  return formatDate(d);
+};
+const genId = () => Math.random().toString(36).substr(2,9);
+
+// ==================== COMMON COMPONENTS ====================
+function StatusBadge({ status }) {
+  const map = { available: 'badge-available', issued: 'badge-issued', overdue: 'badge-overdue', returned: 'badge-returned' };
+  return <span className={`badge ${map[status] || 'badge-default'}`}>{status}</span>;
+}
+
+function PriorityBadge({ priority }) {
+  return <span className={`badge priority-${priority}`}>{priority}</span>;
+}
+
+function ToastContainer() {
+  const { toasts } = useApp();
+  const icons = { success: 'check', error: 'x', info: 'info' };
+  return (
+    <div className="toast-container">
+      {toasts.map(t => (
+        <div key={t.id} className={`toast toast-${t.type}`}>
+          <Icon name={icons[t.type] || 'info'} size={16} />
+          {t.msg}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Modal({ open, onClose, title, children, footer, size = '' }) {
+  if (!open) return null;
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className={`modal ${size}`}>
+        <div className="modal-header">
+          <h3 className="modal-title">{title}</h3>
+          <button className="modal-close" onClick={onClose}><Icon name="x" size={18}/></button>
+        </div>
+        <div className="modal-body">{children}</div>
+        {footer && <div className="modal-footer">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal({ open, onClose, onConfirm, title, message }) {
+  return (
+    <Modal open={open} onClose={onClose} title={title}
+      footer={<>
+        <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+        <button className="btn btn-danger" onClick={() => { onConfirm(); onClose(); }}>Delete</button>
+      </>}
+    >
+      <p style={{color:'var(--muted)', fontSize:'0.9rem'}}>{message}</p>
+    </Modal>
+  );
+}
+
+function Pagination({ page, totalPages, onPage }) {
+  if (totalPages <= 1) return null;
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== '...') {
+      pages.push('...');
+    }
+  }
+  return (
+    <div className="pagination">
+      <button className="page-btn" onClick={() => onPage(page-1)} disabled={page===1}><Icon name="arrowLeft" size={14}/></button>
+      {pages.map((p, i) => (
+        <button key={i} className={`page-btn ${p === page ? 'active' : ''}`}
+          onClick={() => typeof p === 'number' && onPage(p)}
+          disabled={p === '...'}
+          style={p==='...' ? {cursor:'default',border:'none'} : {}}>
+          {p}
+        </button>
+      ))}
+      <button className="page-btn" onClick={() => onPage(page+1)} disabled={page===totalPages}><Icon name="arrowRight" size={14}/></button>
+    </div>
+  );
+}
+
+function SearchBar({ value, onChange, placeholder }) {
+  return (
+    <div className="search-bar">
+      <Icon name="search" size={16} className="search-icon" />
+      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || 'Search...'} />
+    </div>
+  );
+}
+
+function Select({ value, onChange, options, placeholder }) {
+  return (
+    <select className="form-input" value={value} onChange={e => onChange(e.target.value)}>
+      {placeholder && <option value="">{placeholder}</option>}
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  );
+}
+
+// ==================== DASHBOARD ====================
+function Dashboard() {
+  const { books, transactions, activityLog } = useApp();
+  const totalBooks = books.length;
+  const totalCopies = books.reduce((s, b) => s + b.total_quantity, 0);
+  const issuedBooks = transactions.filter(t => t.status === 'issued').length;
+  const overdueBooks = transactions.filter(t => t.status === 'overdue').length;
+  const availableCopies = books.reduce((s, b) => s + b.available_quantity, 0);
+
+  const stats = [
+    { label: 'Total Books', value: totalBooks, sub: `${totalCopies} copies`, icon: 'book', color: '#8B5CF6', bg: '#f5f0ff' },
+    { label: 'Available', value: availableCopies, sub: 'copies in library', icon: 'check', color: '#10B981', bg: '#f0fdf4' },
+    { label: 'Issued', value: issuedBooks, sub: 'currently out', icon: 'bookOpen', color: '#3B82F6', bg: '#eff6ff' },
+    { label: 'Overdue', value: overdueBooks, sub: 'need attention', icon: 'alert', color: '#EF4444', bg: '#fff1f2' },
+  ];
+
+  const activityColors = { BOOK_ISSUED: '#3B82F6', BOOK_RETURNED: '#10B981', BOOK_ADDED: '#8B5CF6', default: '#6B7280' };
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem', marginBottom:4}}>Library Overview</h2>
+        <p className="text-sm text-muted">{new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}</p>
+      </div>
+
+      <div className="stats-grid">
+        {stats.map(s => (
+          <div key={s.label} className="stat-card">
+            <div className="stat-icon" style={{background: s.bg, color: s.color}}>
+              <Icon name={s.icon} size={20}/>
+            </div>
+            <div className="stat-content">
+              <div className="stat-value" style={{color: s.color}}>{s.value}</div>
+              <div className="stat-label">{s.label}</div>
+              <div className="stat-change text-muted">{s.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:24}}>
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Recent Activity</span>
+            <span className="text-xs text-muted">Last {activityLog.slice(0,6).length} events</span>
+          </div>
+          <div className="card-body" style={{padding:'12px 22px'}}>
+            {activityLog.slice(0,6).map(a => (
+              <div key={a.id} className="activity-item">
+                <div className="activity-dot" style={{background: activityColors[a.action_type] || activityColors.default}}/>
+                <div>
+                  <div className="activity-text">{a.description}</div>
+                  <div className="activity-time">{timeAgo(a.created_at)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Overdue Books</span>
+            <span className="badge badge-overdue">{overdueBooks} overdue</span>
+          </div>
+          <div className="card-body" style={{padding:0}}>
+            {transactions.filter(t => t.status === 'overdue').length === 0 ? (
+              <div className="empty-state" style={{padding:'32px'}}>
+                <Icon name="check" size={32}/>
+                <p>No overdue books!</p>
+              </div>
+            ) : (
+              <table>
+                <thead><tr><th>Book</th><th>User</th><th>Overdue</th></tr></thead>
+                <tbody>
+                  {transactions.filter(t => t.status === 'overdue').map(t => {
+                    const daysLate = Math.ceil((Date.now() - new Date(t.due_date)) / 86400000);
+                    return (
+                      <tr key={t.id}>
+                        <td style={{maxWidth:160}} className="truncate">{t.book_title}</td>
+                        <td className="text-sm">{t.user_name}</td>
+                        <td><span className="badge badge-overdue">{daysLate}d late</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header">
+          <span className="card-title">Book Collection by Category</span>
+        </div>
+        <div className="card-body">
+          <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12}}>
+            {useApp().categories.map(c => {
+              const catBooks = books.filter(b => b.category_id === c.id);
+              const catAvail = catBooks.reduce((s, b) => s + b.available_quantity, 0);
+              const catTotal = catBooks.reduce((s, b) => s + b.total_quantity, 0);
+              const pct = catTotal > 0 ? (catAvail / catTotal * 100) : 0;
+              return (
+                <div key={c.id} style={{padding:'12px 16px', borderRadius:10, border:'1px solid var(--border)', background:'var(--paper)'}}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="color-dot" style={{background: c.color}}/>
+                    <span className="font-medium text-sm" style={{fontSize:'0.8rem'}}>{c.name}</span>
+                  </div>
+                  <div style={{fontSize:'1.2rem', fontFamily:'Playfair Display, serif', fontWeight:600}}>{catBooks.length}</div>
+                  <div className="text-xs text-muted">{catAvail}/{catTotal} available</div>
+                  <div style={{marginTop:8, height:4, borderRadius:2, background:'var(--border)'}}>
+                    <div style={{width:`${pct}%`, height:'100%', borderRadius:2, background: c.color, transition:'width 0.5s'}}/>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== BOOKS ====================
+function Books() {
+  const { books, categories, subjects, addBook, updateBook, deleteBook } = useApp();
+  const [search, setSearch] = useState('');
+  const [filterCat, setFilterCat] = useState('');
+  const [filterSub, setFilterSub] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [page, setPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editBook, setEditBook] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const PER_PAGE = 8;
+
+  const filtered = books.filter(b => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || (b.isbn||'').includes(q);
+    const matchCat = !filterCat || b.category_id === filterCat;
+    const matchSub = !filterSub || b.subject_id === filterSub;
+    const matchStatus = !filterStatus || b.status === filterStatus;
+    return matchSearch && matchCat && matchSub && matchStatus;
+  });
+
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const pageBooks = filtered.slice((page-1)*PER_PAGE, page*PER_PAGE);
+
+  useEffect(() => { setPage(1); }, [search, filterCat, filterSub, filterStatus]);
+
+  function BookForm({ book, onClose }) {
+    const [form, setForm] = useState({ title:'', author:'', isbn:'', category_id:'', subject_id:'', total_quantity:1, rack_number:'', publisher:'', published_year:'', description:'', ...book });
+    const [errors, setErrors] = useState({});
+    const filteredSubs = subjects.filter(s => !form.category_id || s.category_id === form.category_id);
+    const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+    const validate = () => {
+      const e = {};
+      if (!form.title.trim()) e.title = 'Title is required';
+      if (!form.author.trim()) e.author = 'Author is required';
+      if (!form.total_quantity || form.total_quantity < 1) e.total_quantity = 'Min quantity is 1';
+      setErrors(e);
+      return Object.keys(e).length === 0;
+    };
+
+    const handleSubmit = () => {
+      if (!validate()) return;
+      if (book) updateBook(book.id, { ...form, total_quantity: parseInt(form.total_quantity) });
+      else addBook({ ...form, total_quantity: parseInt(form.total_quantity) });
+      onClose();
+    };
+
+    return (
+      <>
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">Title *</label>
+            <input className={`form-input ${errors.title?'error':''}`} value={form.title} onChange={e=>set('title',e.target.value)} placeholder="Book title"/>
+            {errors.title && <div className="form-error">{errors.title}</div>}
+          </div>
+          <div className="form-group">
+            <label className="form-label">Author *</label>
+            <input className={`form-input ${errors.author?'error':''}`} value={form.author} onChange={e=>set('author',e.target.value)} placeholder="Author name"/>
+            {errors.author && <div className="form-error">{errors.author}</div>}
+          </div>
+        </div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">ISBN</label>
+            <input className="form-input" value={form.isbn} onChange={e=>set('isbn',e.target.value)} placeholder="978-..."/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Rack Number</label>
+            <input className="form-input" value={form.rack_number} onChange={e=>set('rack_number',e.target.value)} placeholder="e.g. A-101"/>
+          </div>
+        </div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">Category</label>
+            <Select value={form.category_id} onChange={v=>{set('category_id',v); set('subject_id','');}} options={categories.map(c=>({value:c.id,label:c.name}))} placeholder="Select category"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Subject</label>
+            <Select value={form.subject_id} onChange={v=>set('subject_id',v)} options={filteredSubs.map(s=>({value:s.id,label:s.name}))} placeholder="Select subject"/>
+          </div>
+        </div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">Quantity *</label>
+            <input type="number" min="1" className={`form-input ${errors.total_quantity?'error':''}`} value={form.total_quantity} onChange={e=>set('total_quantity',e.target.value)}/>
+            {errors.total_quantity && <div className="form-error">{errors.total_quantity}</div>}
+          </div>
+          <div className="form-group">
+            <label className="form-label">Publisher</label>
+            <input className="form-input" value={form.publisher} onChange={e=>set('publisher',e.target.value)} placeholder="Publisher"/>
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <textarea className="form-input" rows="2" value={form.description} onChange={e=>set('description',e.target.value)} style={{resize:'vertical'}}/>
+        </div>
+        <div className="modal-footer" style={{padding:0, marginTop:4}}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-gold" onClick={handleSubmit}>{book ? 'Update Book' : 'Add Book'}</button>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem'}}>Books Catalog</h2>
+          <p className="text-sm text-muted mt-1">{books.length} books in collection</p>
+        </div>
+        <button className="btn btn-gold" onClick={() => { setEditBook(null); setModalOpen(true); }}>
+          <Icon name="plus" size={16}/> Add Book
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="card mb-4">
+        <div className="card-body" style={{padding:'14px 18px'}}>
+          <div style={{display:'flex', gap:10, flexWrap:'wrap', alignItems:'center'}}>
+            <SearchBar value={search} onChange={setSearch} placeholder="Search title, author, ISBN..."/>
+            <Select value={filterCat} onChange={setFilterCat} options={categories.map(c=>({value:c.id,label:c.name}))} placeholder="All categories"/>
+            <Select value={filterSub} onChange={setFilterSub} options={subjects.map(s=>({value:s.id,label:s.name}))} placeholder="All subjects"/>
+            <Select value={filterStatus} onChange={setFilterStatus} options={[{value:'available',label:'Available'},{value:'issued',label:'Issued'},{value:'overdue',label:'Overdue'}]} placeholder="All statuses"/>
+            {(search||filterCat||filterSub||filterStatus) && (
+              <button className="btn btn-ghost btn-sm" onClick={()=>{setSearch('');setFilterCat('');setFilterSub('');setFilterStatus('');}}>Clear</button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="table-wrapper">
+          <table>
+            <thead><tr><th>Title</th><th>Author</th><th>Category</th><th>Subject</th><th>ISBN</th><th>Copies</th><th>Rack</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              {pageBooks.length === 0 ? (
+                <tr><td colSpan="9"><div className="empty-state"><Icon name="book" size={36}/><p>No books found</p></div></td></tr>
+              ) : pageBooks.map(b => (
+                <tr key={b.id}>
+                  <td>
+                    <div style={{fontWeight:500, maxWidth:180}} className="truncate">{b.title}</div>
+                    {b.description && <div className="text-xs text-muted" style={{maxWidth:180}} className="truncate">{b.description}</div>}
+                  </td>
+                  <td className="text-sm">{b.author}</td>
+                  <td>
+                    <div className="flex items-center gap-2">
+                      <div className="color-dot" style={{background: b.category_color || '#999'}}/>
+                      <span className="text-sm">{b.category_name || '—'}</span>
+                    </div>
+                  </td>
+                  <td className="text-sm text-muted">{b.subject_name || '—'}</td>
+                  <td className="text-xs text-muted">{b.isbn || '—'}</td>
+                  <td className="text-sm">{b.available_quantity}/{b.total_quantity}</td>
+                  <td className="text-xs">{b.rack_number || '—'}</td>
+                  <td><StatusBadge status={b.status}/></td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button className="btn btn-ghost btn-sm" onClick={() => { setEditBook(b); setModalOpen(true); }}><Icon name="edit" size={14}/></button>
+                      <button className="btn btn-danger btn-sm" onClick={() => setDeleteConfirm(b)}><Icon name="trash" size={14}/></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {totalPages > 1 && (
+          <div style={{padding:'14px 18px', borderTop:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <span className="text-sm text-muted">Showing {(page-1)*PER_PAGE+1}–{Math.min(page*PER_PAGE,filtered.length)} of {filtered.length}</span>
+            <Pagination page={page} totalPages={totalPages} onPage={setPage}/>
+          </div>
+        )}
+      </div>
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editBook ? 'Edit Book' : 'Add New Book'}>
+        <BookForm book={editBook} onClose={() => setModalOpen(false)}/>
+      </Modal>
+
+      <ConfirmModal open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} onConfirm={() => deleteBook(deleteConfirm?.id)}
+        title="Delete Book" message={`Are you sure you want to delete "${deleteConfirm?.title}"?`}/>
+    </div>
+  );
+}
+
+// ==================== CATEGORIES ====================
+function Categories() {
+  const { categories, addCategory, updateCategory, deleteCategory } = useApp();
+  const [modal, setModal] = useState(null); // null | 'add' | { edit category }
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [form, setForm] = useState({ name:'', description:'', color:'#3B82F6' });
+
+  const COLORS = ['#8B5CF6','#3B82F6','#EF4444','#F59E0B','#10B981','#EC4899','#F97316','#6366F1','#0EA5E9','#14B8A6'];
+
+  const openAdd = () => { setForm({ name:'', description:'', color:'#3B82F6' }); setModal('add'); };
+  const openEdit = (c) => { setForm({ name:c.name, description:c.description||'', color:c.color }); setModal(c); };
+
+  const handleSubmit = () => {
+    if (!form.name.trim()) return;
+    if (modal === 'add') addCategory(form);
+    else updateCategory(modal.id, form);
+    setModal(null);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem'}}>Categories</h2>
+          <p className="text-sm text-muted mt-1">{categories.length} categories defined</p>
+        </div>
+        <button className="btn btn-gold" onClick={openAdd}><Icon name="plus" size={16}/> Add Category</button>
+      </div>
+
+      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:16}}>
+        {categories.map(c => (
+          <div key={c.id} className="card">
+            <div className="card-body">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div style={{width:40, height:40, borderRadius:10, background: c.color+'20', display:'flex', alignItems:'center', justifyContent:'center', color: c.color}}>
+                    <Icon name="tag" size={18}/>
+                  </div>
+                  <div>
+                    <div style={{fontWeight:600, fontSize:'0.95rem'}}>{c.name}</div>
+                    <div className="text-xs text-muted">{c.book_count || 0} books</div>
+                  </div>
+                </div>
+                <div style={{width:12, height:12, borderRadius:'50%', background: c.color}}/>
+              </div>
+              {c.description && <p className="text-sm text-muted" style={{marginBottom:14, lineHeight:1.5}}>{c.description}</p>}
+              <div className="flex gap-2">
+                <button className="btn btn-ghost btn-sm" style={{flex:1}} onClick={()=>openEdit(c)}><Icon name="edit" size={13}/> Edit</button>
+                <button className="btn btn-danger btn-sm" onClick={()=>setDeleteConfirm(c)}><Icon name="trash" size={13}/></button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal === 'add' ? 'New Category' : 'Edit Category'}
+        footer={<><button className="btn btn-ghost" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-gold" onClick={handleSubmit}>Save</button></>}>
+        <div className="form-group">
+          <label className="form-label">Name *</label>
+          <input className="form-input" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="Category name"/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <input className="form-input" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} placeholder="Optional description"/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Color</label>
+          <div style={{display:'flex', gap:8, flexWrap:'wrap', marginTop:4}}>
+            {COLORS.map(col => (
+              <div key={col} onClick={()=>setForm(p=>({...p,color:col}))}
+                style={{width:28, height:28, borderRadius:7, background:col, cursor:'pointer', border: form.color===col ? '3px solid var(--ink)' : '3px solid transparent', transition:'border 0.15s'}}/>
+            ))}
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmModal open={!!deleteConfirm} onClose={()=>setDeleteConfirm(null)} onConfirm={()=>deleteCategory(deleteConfirm?.id)}
+        title="Delete Category" message={`Delete "${deleteConfirm?.name}"? Books in this category will be uncategorized.`}/>
+    </div>
+  );
+}
+
+// ==================== SUBJECTS ====================
+function Subjects() {
+  const { subjects, categories, addSubject, updateSubject, deleteSubject } = useApp();
+  const [modal, setModal] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [form, setForm] = useState({ name:'', description:'', category_id:'' });
+  const [filterCat, setFilterCat] = useState('');
+
+  const filtered = filterCat ? subjects.filter(s => s.category_id === filterCat) : subjects;
+
+  const openAdd = () => { setForm({ name:'', description:'', category_id:'' }); setModal('add'); };
+  const openEdit = (s) => { setForm({ name:s.name, description:s.description||'', category_id:s.category_id||'' }); setModal(s); };
+  const handleSubmit = () => {
+    if (!form.name.trim()) return;
+    if (modal === 'add') addSubject(form);
+    else updateSubject(modal.id, form);
+    setModal(null);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem'}}>Subjects</h2>
+          <p className="text-sm text-muted mt-1">{subjects.length} subjects across all categories</p>
+        </div>
+        <div className="flex gap-3">
+          <Select value={filterCat} onChange={setFilterCat} options={categories.map(c=>({value:c.id,label:c.name}))} placeholder="All categories"/>
+          <button className="btn btn-gold" onClick={openAdd}><Icon name="plus" size={16}/> Add Subject</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <table>
+          <thead><tr><th>Subject</th><th>Description</th><th>Category</th><th>Books</th><th>Actions</th></tr></thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <tr><td colSpan="5"><div className="empty-state"><Icon name="subject" size={36}/><p>No subjects found</p></div></td></tr>
+            ) : filtered.map(s => {
+              const cat = categories.find(c => c.id === s.category_id);
+              return (
+                <tr key={s.id}>
+                  <td style={{fontWeight:500}}>{s.name}</td>
+                  <td className="text-sm text-muted">{s.description || '—'}</td>
+                  <td>
+                    {cat ? (
+                      <div className="flex items-center gap-2">
+                        <div className="color-dot" style={{background: cat.color}}/>
+                        <span className="text-sm">{cat.name}</span>
+                      </div>
+                    ) : <span className="text-muted">—</span>}
+                  </td>
+                  <td><span className="badge badge-default">{s.book_count || 0}</span></td>
+                  <td>
+                    <div className="flex gap-2">
+                      <button className="btn btn-ghost btn-sm" onClick={()=>openEdit(s)}><Icon name="edit" size={14}/></button>
+                      <button className="btn btn-danger btn-sm" onClick={()=>setDeleteConfirm(s)}><Icon name="trash" size={14}/></button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={!!modal} onClose={()=>setModal(null)} title={modal==='add'?'New Subject':'Edit Subject'}
+        footer={<><button className="btn btn-ghost" onClick={()=>setModal(null)}>Cancel</button><button className="btn btn-gold" onClick={handleSubmit}>Save</button></>}>
+        <div className="form-group">
+          <label className="form-label">Name *</label>
+          <input className="form-input" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} placeholder="Subject name"/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Category</label>
+          <Select value={form.category_id} onChange={v=>setForm(p=>({...p,category_id:v}))} options={categories.map(c=>({value:c.id,label:c.name}))} placeholder="Select category"/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <input className="form-input" value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))} placeholder="Optional description"/>
+        </div>
+      </Modal>
+
+      <ConfirmModal open={!!deleteConfirm} onClose={()=>setDeleteConfirm(null)} onConfirm={()=>deleteSubject(deleteConfirm?.id)}
+        title="Delete Subject" message={`Delete "${deleteConfirm?.name}"? Books will be unassigned from this subject.`}/>
+    </div>
+  );
+}
+
+// ==================== CHECKOUT ====================
+function Checkout() {
+  const { books, users, checkoutBook } = useApp();
+  const [step, setStep] = useState(1);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [bookSearch, setBookSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [result, setResult] = useState(null);
+
+  const availableBooks = books.filter(b => b.available_quantity > 0);
+  const filteredBooks = availableBooks.filter(b => {
+    const q = bookSearch.toLowerCase();
+    return !q || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || (b.isbn||'').includes(q);
+  });
+  const filteredUsers = users.filter(u => {
+    const q = userSearch.toLowerCase();
+    return !q || u.name.toLowerCase().includes(q) || u.member_id.toLowerCase().includes(q) || (u.email||'').includes(q);
+  });
+
+  const handleCheckout = () => {
+    const tx = checkoutBook(selectedBook.id, selectedUser.id);
+    if (tx) {
+      setResult(tx);
+      setStep(4);
+    }
+  };
+
+  const reset = () => { setStep(1); setSelectedBook(null); setSelectedUser(null); setResult(null); setBookSearch(''); setUserSearch(''); };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem'}}>Book Checkout</h2>
+          <p className="text-sm text-muted mt-1">Issue books to library members</p>
+        </div>
+      </div>
+
+      {/* Steps */}
+      <div style={{display:'flex', alignItems:'center', marginBottom:28, gap:0}}>
+        {['Select Book', 'Select Member', 'Confirm', 'Done'].map((label, i) => (
+          <React.Fragment key={i}>
+            <div style={{display:'flex', alignItems:'center', gap:8}}>
+              <div style={{width:30, height:30, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'0.8rem', fontWeight:600,
+                background: step > i+1 ? 'var(--success)' : step === i+1 ? 'var(--ink)' : 'var(--border)',
+                color: step >= i+1 ? '#fff' : 'var(--muted)', transition:'all 0.3s'}}>
+                {step > i+1 ? <Icon name="check" size={14}/> : i+1}
+              </div>
+              <span style={{fontSize:'0.82rem', fontWeight: step===i+1?600:400, color: step===i+1?'var(--ink)':'var(--muted)', whiteSpace:'nowrap'}}>{label}</span>
+            </div>
+            {i < 3 && <div style={{flex:1, height:1, background: step > i+1 ? 'var(--success)' : 'var(--border)', margin:'0 8px', maxWidth:40}}/>}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {step === 1 && (
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Select a Book</span>
+            <SearchBar value={bookSearch} onChange={setBookSearch} placeholder="Search available books..."/>
+          </div>
+          <div className="table-wrapper">
+            <table>
+              <thead><tr><th>Title</th><th>Author</th><th>Category</th><th>Available</th><th>Rack</th><th></th></tr></thead>
+              <tbody>
+                {filteredBooks.slice(0,10).map(b => (
+                  <tr key={b.id} style={{cursor:'pointer'}} onClick={() => { setSelectedBook(b); setStep(2); }}>
+                    <td style={{fontWeight:500}}>{b.title}</td>
+                    <td className="text-sm">{b.author}</td>
+                    <td><span className="text-sm">{b.category_name || '—'}</span></td>
+                    <td><span className="badge badge-available">{b.available_quantity} avail.</span></td>
+                    <td className="text-xs text-muted">{b.rack_number || '—'}</td>
+                    <td><button className="btn btn-gold btn-sm">Select →</button></td>
+                  </tr>
+                ))}
+                {filteredBooks.length === 0 && <tr><td colSpan="6"><div className="empty-state"><p>No available books found</p></div></td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div>
+          <div style={{marginBottom:16, padding:'12px 16px', background:'var(--paper)', borderRadius:10, border:'1px solid var(--border)', display:'flex', alignItems:'center', gap:12}}>
+            <Icon name="book" size={18} style={{color:'var(--gold)'}}/>
+            <div>
+              <div style={{fontWeight:600}}>{selectedBook.title}</div>
+              <div className="text-xs text-muted">by {selectedBook.author} · {selectedBook.available_quantity} copies available</div>
+            </div>
+            <button className="btn btn-ghost btn-sm" style={{marginLeft:'auto'}} onClick={()=>setStep(1)}>Change</button>
+          </div>
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Select Member</span>
+              <SearchBar value={userSearch} onChange={setUserSearch} placeholder="Search by name, ID, email..."/>
+            </div>
+            <table>
+              <thead><tr><th>Name</th><th>Member ID</th><th>Type</th><th>Department</th><th></th></tr></thead>
+              <tbody>
+                {filteredUsers.map(u => (
+                  <tr key={u.id} style={{cursor:'pointer'}} onClick={() => { setSelectedUser(u); setStep(3); }}>
+                    <td style={{fontWeight:500}}>{u.name}</td>
+                    <td className="text-xs">{u.member_id}</td>
+                    <td><span className="tag">{u.user_type}</span></td>
+                    <td className="text-sm text-muted">{u.department || '—'}</td>
+                    <td><button className="btn btn-gold btn-sm">Select →</button></td>
+                  </tr>
+                ))}
+                {filteredUsers.length === 0 && <tr><td colSpan="5"><div className="empty-state"><p>No members found</p></div></td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="card" style={{maxWidth:480, margin:'0 auto'}}>
+          <div className="card-header"><span className="card-title">Confirm Checkout</span></div>
+          <div className="card-body">
+            <div style={{background:'var(--paper)', borderRadius:10, padding:'16px', marginBottom:20}}>
+              <div style={{marginBottom:12, paddingBottom:12, borderBottom:'1px solid var(--border)'}}>
+                <div className="text-xs text-muted mb-1">BOOK</div>
+                <div style={{fontWeight:600}}>{selectedBook.title}</div>
+                <div className="text-sm text-muted">by {selectedBook.author}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted mb-1">MEMBER</div>
+                <div style={{fontWeight:600}}>{selectedUser.name}</div>
+                <div className="text-sm text-muted">{selectedUser.member_id} · {selectedUser.user_type}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2" style={{background:'#fffbeb', borderRadius:8, padding:'10px 14px', marginBottom:20}}>
+              <Icon name="clock" size={16} style={{color:'var(--warning)'}}/>
+              <div className="text-sm">Due date: <strong>{formatDate(new Date(Date.now() + 14*86400000).toISOString())}</strong> (14 days)</div>
+            </div>
+            <div className="flex gap-3">
+              <button className="btn btn-ghost" style={{flex:1}} onClick={()=>setStep(2)}>← Back</button>
+              <button className="btn btn-success" style={{flex:2}} onClick={handleCheckout}>✓ Confirm Checkout</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && result && (
+        <div className="card" style={{maxWidth:440, margin:'0 auto', textAlign:'center'}}>
+          <div className="card-body">
+            <div style={{width:60, height:60, borderRadius:'50%', background:'#e8f5ee', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', color:'var(--success)'}}>
+              <Icon name="check" size={28}/>
+            </div>
+            <h3 style={{fontFamily:'Playfair Display, serif', fontSize:'1.2rem', marginBottom:8}}>Book Issued!</h3>
+            <p className="text-sm text-muted" style={{marginBottom:20}}>
+              <strong>{selectedBook.title}</strong> has been issued to <strong>{selectedUser.name}</strong>
+            </p>
+            <div style={{background:'var(--paper)', borderRadius:8, padding:'12px', marginBottom:20, textAlign:'left'}}>
+              <div style={{display:'flex', justifyContent:'space-between', marginBottom:6}}>
+                <span className="text-xs text-muted">Issue Date</span>
+                <span className="text-sm">{formatDate(result.issue_date)}</span>
+              </div>
+              <div style={{display:'flex', justifyContent:'space-between'}}>
+                <span className="text-xs text-muted">Due Date</span>
+                <span className="text-sm font-medium" style={{color:'var(--warning)'}}>{formatDate(result.due_date)}</span>
+              </div>
+            </div>
+            <button className="btn btn-gold" style={{width:'100%'}} onClick={reset}>Issue Another Book</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== RETURN ====================
+function Return() {
+  const { transactions, returnBook } = useApp();
+  const [search, setSearch] = useState('');
+  const [returnResult, setReturnResult] = useState(null);
+
+  const activeTransactions = transactions.filter(t => ['issued','overdue'].includes(t.status));
+  const filtered = activeTransactions.filter(t => {
+    const q = search.toLowerCase();
+    return !q || t.book_title.toLowerCase().includes(q) || t.user_name.toLowerCase().includes(q) || t.member_id.toLowerCase().includes(q);
+  });
+
+  const handleReturn = (txId) => {
+    const res = returnBook(txId);
+    if (res) setReturnResult(res);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem'}}>Book Returns</h2>
+          <p className="text-sm text-muted mt-1">{activeTransactions.length} books currently issued</p>
+        </div>
+      </div>
+
+      {returnResult && (
+        <div style={{background: returnResult.fine > 0 ? '#fff8e1' : '#e8f5ee', border: `1px solid ${returnResult.fine > 0 ? '#ffd54f' : '#a5d6b7'}`, borderRadius:12, padding:'20px 24px', marginBottom:24}}>
+          <div className="flex items-center gap-3">
+            <div style={{color: returnResult.fine > 0 ? 'var(--warning)' : 'var(--success)'}}>
+              {returnResult.fine > 0 ? <Icon name="dollar" size={24}/> : <Icon name="check" size={24}/>}
+            </div>
+            <div>
+              <div style={{fontWeight:600, marginBottom:2}}>Book returned successfully!</div>
+              {returnResult.fine > 0
+                ? <div className="text-sm" style={{color:'var(--warning)'}}>Fine charged: <strong>${returnResult.fine.toFixed(2)}</strong> for late return</div>
+                : <div className="text-sm text-muted">No fine — returned on time</div>
+              }
+            </div>
+            <button className="btn btn-ghost btn-sm" style={{marginLeft:'auto'}} onClick={() => setReturnResult(null)}>Dismiss</button>
+          </div>
+        </div>
+      )}
+
+      <div className="card mb-4">
+        <div className="card-body" style={{padding:'14px 18px'}}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Search by book title, member name or ID..."/>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="table-wrapper">
+          <table>
+            <thead><tr><th>Book</th><th>Member</th><th>Issue Date</th><th>Due Date</th><th>Status</th><th>Fine</th><th>Action</th></tr></thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan="7"><div className="empty-state"><Icon name="check" size={36}/><p>No active transactions</p></div></td></tr>
+              ) : filtered.map(t => {
+                const daysLate = t.status === 'overdue' ? Math.ceil((Date.now() - new Date(t.due_date)) / 86400000) : 0;
+                const projectedFine = daysLate > 0 ? daysLate * 1 : 0;
+                return (
+                  <tr key={t.id}>
+                    <td style={{fontWeight:500, maxWidth:160}} className="truncate">{t.book_title}</td>
+                    <td>
+                      <div className="text-sm">{t.user_name}</div>
+                      <div className="text-xs text-muted">{t.member_id}</div>
+                    </td>
+                    <td className="text-sm">{formatDate(t.issue_date)}</td>
+                    <td className="text-sm">{formatDate(t.due_date)}</td>
+                    <td><StatusBadge status={t.status}/></td>
+                    <td>
+                      {projectedFine > 0
+                        ? <span style={{color:'var(--danger)', fontWeight:600, fontSize:'0.85rem'}}>${projectedFine.toFixed(2)}</span>
+                        : <span className="text-muted text-xs">None</span>
+                      }
+                    </td>
+                    <td>
+                      <button className="btn btn-success btn-sm" onClick={()=>handleReturn(t.id)}>
+                        <Icon name="check" size={13}/> Return
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== TRANSACTIONS HISTORY ====================
+function Transactions() {
+  const { transactions } = useApp();
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 10;
+
+  const filtered = transactions.filter(t => {
+    const q = search.toLowerCase();
+    const matchS = !q || t.book_title.toLowerCase().includes(q) || t.user_name.toLowerCase().includes(q) || t.member_id.toLowerCase().includes(q);
+    const matchSt = !filterStatus || t.status === filterStatus;
+    return matchS && matchSt;
+  });
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const page_txs = filtered.slice((page-1)*PER_PAGE, page*PER_PAGE);
+  useEffect(() => setPage(1), [search, filterStatus]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem'}}>Transaction History</h2>
+          <p className="text-sm text-muted mt-1">{transactions.length} total transactions</p>
+        </div>
+      </div>
+      <div className="card mb-4">
+        <div className="card-body" style={{padding:'14px 18px'}}>
+          <div style={{display:'flex', gap:10, flexWrap:'wrap', alignItems:'center'}}>
+            <SearchBar value={search} onChange={setSearch} placeholder="Search by book, member..."/>
+            <Select value={filterStatus} onChange={setFilterStatus} options={[{value:'issued',label:'Issued'},{value:'overdue',label:'Overdue'},{value:'returned',label:'Returned'}]} placeholder="All statuses"/>
+          </div>
+        </div>
+      </div>
+      <div className="card">
+        <div className="table-wrapper">
+          <table>
+            <thead><tr><th>Book</th><th>Member</th><th>Issued</th><th>Due</th><th>Returned</th><th>Status</th><th>Fine</th></tr></thead>
+            <tbody>
+              {page_txs.length === 0 ? (
+                <tr><td colSpan="7"><div className="empty-state"><Icon name="transaction" size={36}/><p>No transactions found</p></div></td></tr>
+              ) : page_txs.map(t => (
+                <tr key={t.id}>
+                  <td>
+                    <div style={{fontWeight:500, maxWidth:160}} className="truncate">{t.book_title}</div>
+                    <div className="text-xs text-muted">{t.isbn || ''}</div>
+                  </td>
+                  <td>
+                    <div className="text-sm">{t.user_name}</div>
+                    <div className="text-xs text-muted">{t.member_id}</div>
+                  </td>
+                  <td className="text-sm">{formatDate(t.issue_date)}</td>
+                  <td className="text-sm">{formatDate(t.due_date)}</td>
+                  <td className="text-sm">{t.return_date ? formatDate(t.return_date) : <span className="text-muted">—</span>}</td>
+                  <td><StatusBadge status={t.status}/></td>
+                  <td>{t.fine_amount > 0 ? <span style={{color:'var(--danger)', fontWeight:600}}>${Number(t.fine_amount).toFixed(2)}</span> : <span className="text-muted">—</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {totalPages > 1 && (
+          <div style={{padding:'14px 18px', borderTop:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <span className="text-sm text-muted">Showing {(page-1)*PER_PAGE+1}–{Math.min(page*PER_PAGE,filtered.length)} of {filtered.length}</span>
+            <Pagination page={page} totalPages={totalPages} onPage={setPage}/>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ==================== MEMBERS ====================
+function Members() {
+  const { users, transactions, addUser } = useApp();
+  const [modal, setModal] = useState(false);
+  const [search, setSearch] = useState('');
+  const [form, setForm] = useState({ name:'', email:'', phone:'', member_id:'', user_type:'student', department:'' });
+  const [errors, setErrors] = useState({});
+  const set = (k, v) => setForm(p => ({...p, [k]: v}));
+
+  const filtered = users.filter(u => {
+    const q = search.toLowerCase();
+    return !q || u.name.toLowerCase().includes(q) || u.member_id.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q);
+  });
+
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = 'Name required';
+    if (!form.member_id.trim()) e.member_id = 'Member ID required';
+    setErrors(e);
+    return !Object.keys(e).length;
+  };
+
+  const handleAdd = () => {
+    if (!validate()) return;
+    addUser(form);
+    setForm({ name:'', email:'', phone:'', member_id:'', user_type:'student', department:'' });
+    setModal(false);
+  };
+
+  const getActiveBorrows = (uid) => transactions.filter(t => t.user_id === uid && ['issued','overdue'].includes(t.status)).length;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem'}}>Library Members</h2>
+          <p className="text-sm text-muted mt-1">{users.length} registered members</p>
+        </div>
+        <div className="flex gap-3">
+          <SearchBar value={search} onChange={setSearch} placeholder="Search members..."/>
+          <button className="btn btn-gold" onClick={() => setModal(true)}><Icon name="plus" size={16}/> Add Member</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <table>
+          <thead><tr><th>Name</th><th>Member ID</th><th>Email</th><th>Type</th><th>Department</th><th>Active Loans</th><th>Status</th></tr></thead>
+          <tbody>
+            {filtered.map(u => {
+              const active = getActiveBorrows(u.id);
+              return (
+                <tr key={u.id}>
+                  <td style={{fontWeight:500}}>{u.name}</td>
+                  <td className="text-xs">{u.member_id}</td>
+                  <td className="text-sm text-muted">{u.email || '—'}</td>
+                  <td><span className="tag">{u.user_type}</span></td>
+                  <td className="text-sm">{u.department || '—'}</td>
+                  <td>{active > 0 ? <span className="badge badge-issued">{active} books</span> : <span className="text-muted text-xs">None</span>}</td>
+                  <td><span className={`badge ${u.active ? 'badge-available' : 'badge-default'}`}>{u.active ? 'Active' : 'Inactive'}</span></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={modal} onClose={() => setModal(false)} title="Add New Member"
+        footer={<><button className="btn btn-ghost" onClick={() => setModal(false)}>Cancel</button><button className="btn btn-gold" onClick={handleAdd}>Add Member</button></>}>
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">Full Name *</label>
+            <input className={`form-input ${errors.name?'error':''}`} value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Full name"/>
+            {errors.name && <div className="form-error">{errors.name}</div>}
+          </div>
+          <div className="form-group">
+            <label className="form-label">Member ID *</label>
+            <input className={`form-input ${errors.member_id?'error':''}`} value={form.member_id} onChange={e=>set('member_id',e.target.value)} placeholder="MEM-XXX"/>
+            {errors.member_id && <div className="form-error">{errors.member_id}</div>}
+          </div>
+        </div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <input className="form-input" value={form.email} onChange={e=>set('email',e.target.value)} placeholder="email@example.com"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Phone</label>
+            <input className="form-input" value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="555-0000"/>
+          </div>
+        </div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">User Type</label>
+            <Select value={form.user_type} onChange={v=>set('user_type',v)} options={[{value:'student',label:'Student'},{value:'faculty',label:'Faculty'},{value:'staff',label:'Staff'},{value:'public',label:'Public'}]}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Department</label>
+            <input className="form-input" value={form.department} onChange={e=>set('department',e.target.value)} placeholder="Department"/>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// ==================== NOTES ====================
+function Notes() {
+  const { notes, addNote, updateNote, deleteNote } = useApp();
+  const [modal, setModal] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [form, setForm] = useState({ title:'', content:'', priority:'normal', tags:'', pinned:false });
+  const [filter, setFilter] = useState('all');
+  const set = (k, v) => setForm(p => ({...p, [k]: v}));
+
+  const filtered = notes.filter(n => {
+    if (filter === 'pinned') return n.pinned;
+    if (filter !== 'all') return n.priority === filter;
+    return true;
+  }).sort((a, b) => b.pinned - a.pinned || new Date(b.updated_at) - new Date(a.updated_at));
+
+  const openAdd = () => { setForm({ title:'', content:'', priority:'normal', tags:'', pinned:false }); setModal('add'); };
+  const openEdit = (n) => { setForm({ title:n.title, content:n.content, priority:n.priority, tags:(n.tags||[]).join(', '), pinned:n.pinned }); setModal(n); };
+  const handleSubmit = () => {
+    if (!form.title.trim() || !form.content.trim()) return;
+    const note = { ...form, tags: form.tags.split(',').map(t=>t.trim()).filter(Boolean) };
+    if (modal === 'add') addNote(note);
+    else updateNote(modal.id, note);
+    setModal(null);
+  };
+
+  const FILTERS = [['all','All'],['pinned','Pinned'],['urgent','Urgent'],['high','High'],['normal','Normal'],['low','Low']];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem'}}>Librarian Notes</h2>
+          <p className="text-sm text-muted mt-1">{notes.length} personal notes</p>
+        </div>
+        <button className="btn btn-gold" onClick={openAdd}><Icon name="plus" size={16}/> New Note</button>
+      </div>
+
+      <div style={{display:'flex', gap:8, marginBottom:20, flexWrap:'wrap'}}>
+        {FILTERS.map(([val, label]) => (
+          <button key={val} className={`btn btn-sm ${filter===val?'btn-primary':'btn-ghost'}`} onClick={()=>setFilter(val)}>{label}</button>
+        ))}
+      </div>
+
+      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:16}}>
+        {filtered.map(n => (
+          <div key={n.id} className={`note-card ${n.pinned ? 'pinned' : ''}`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {n.pinned && <Icon name="pin" size={13} style={{color:'var(--gold)'}}/>}
+                <PriorityBadge priority={n.priority}/>
+              </div>
+              <div className="flex gap-1">
+                <button className="btn btn-ghost btn-sm" onClick={() => openEdit(n)}><Icon name="edit" size={13}/></button>
+                <button className="btn btn-danger btn-sm" onClick={() => setDeleteConfirm(n)}><Icon name="trash" size={13}/></button>
+              </div>
+            </div>
+            <h4 style={{fontFamily:'Playfair Display, serif', fontSize:'0.95rem', marginBottom:6}}>{n.title}</h4>
+            <p className="text-sm text-muted" style={{lineHeight:1.6, marginBottom:10}}>{n.content}</p>
+            {n.tags?.length > 0 && (
+              <div className="flex" style={{gap:4, flexWrap:'wrap', marginBottom:8}}>
+                {n.tags.map(tag => <span key={tag} className="tag">#{tag}</span>)}
+              </div>
+            )}
+            <div className="text-xs text-muted">{timeAgo(n.updated_at)}</div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div style={{gridColumn:'1/-1'}}><div className="empty-state card" style={{padding:'60px'}}><Icon name="note" size={36}/><p>No notes found</p></div></div>
+        )}
+      </div>
+
+      <Modal open={!!modal} onClose={() => setModal(null)} title={modal==='add'?'New Note':'Edit Note'}
+        footer={<><button className="btn btn-ghost" onClick={()=>setModal(null)}>Cancel</button><button className="btn btn-gold" onClick={handleSubmit}>Save Note</button></>}>
+        <div className="form-group">
+          <label className="form-label">Title *</label>
+          <input className="form-input" value={form.title} onChange={e=>set('title',e.target.value)} placeholder="Note title"/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Content *</label>
+          <textarea className="form-input" rows="4" value={form.content} onChange={e=>set('content',e.target.value)} style={{resize:'vertical'}} placeholder="Write your note..."/>
+        </div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label className="form-label">Priority</label>
+            <Select value={form.priority} onChange={v=>set('priority',v)} options={[{value:'low',label:'Low'},{value:'normal',label:'Normal'},{value:'high',label:'High'},{value:'urgent',label:'Urgent'}]}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Tags (comma-separated)</label>
+            <input className="form-input" value={form.tags} onChange={e=>set('tags',e.target.value)} placeholder="audit, reminder, ..."/>
+          </div>
+        </div>
+        <div className="form-group">
+          <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+            <input type="checkbox" checked={form.pinned} onChange={e=>set('pinned',e.target.checked)} style={{width:16,height:16,cursor:'pointer'}}/>
+            <span className="form-label" style={{marginBottom:0}}>Pin this note</span>
+          </label>
+        </div>
+      </Modal>
+
+      <ConfirmModal open={!!deleteConfirm} onClose={()=>setDeleteConfirm(null)} onConfirm={()=>deleteNote(deleteConfirm?.id)}
+        title="Delete Note" message={`Delete "${deleteConfirm?.title}"?`}/>
+    </div>
+  );
+}
+
+// ==================== SETTINGS ====================
+function Settings() {
+  const { settings, updateSettings } = useApp();
+  const [form, setForm] = useState(settings);
+
+  const handleSave = () => updateSettings(form);
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 style={{fontFamily:'Playfair Display, serif', fontSize:'1.5rem'}}>System Settings</h2>
+        <p className="text-sm text-muted mt-1">Configure library policies and fine structure</p>
+      </div>
+
+      <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, maxWidth:800}}>
+        <div className="card">
+          <div className="card-header"><span className="card-title">Fine Configuration</span></div>
+          <div className="card-body">
+            <div className="form-group">
+              <label className="form-label">Fine Per Day ($)</label>
+              <input type="number" min="0" step="0.50" className="form-input" value={form.fine_per_day}
+                onChange={e=>setForm(p=>({...p,fine_per_day:parseFloat(e.target.value)||0}))}/>
+              <p className="text-xs text-muted mt-1">Amount charged per day for overdue books</p>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Loan Period (Days)</label>
+              <input type="number" min="1" max="90" className="form-input" value={form.loan_period_days}
+                onChange={e=>setForm(p=>({...p,loan_period_days:parseInt(e.target.value)||14}))}/>
+              <p className="text-xs text-muted mt-1">Default number of days before a book is due</p>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Max Books Per User</label>
+              <input type="number" min="1" max="20" className="form-input" value={form.max_books_per_user}
+                onChange={e=>setForm(p=>({...p,max_books_per_user:parseInt(e.target.value)||5}))}/>
+              <p className="text-xs text-muted mt-1">Maximum simultaneous borrows per member</p>
+            </div>
+            <button className="btn btn-gold" style={{width:'100%'}} onClick={handleSave}>Save Settings</button>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-header"><span className="card-title">Fine Preview</span></div>
+          <div className="card-body">
+            <p className="text-sm text-muted" style={{marginBottom:16}}>With current settings, here's the projected fine for various overdue periods:</p>
+            {[1, 3, 7, 14, 30].map(days => (
+              <div key={days} style={{display:'flex', justifyContent:'space-between', padding:'8px 0', borderBottom:'1px solid var(--border)'}}>
+                <span className="text-sm">{days} day{days>1?'s':''} late</span>
+                <span style={{fontWeight:600, color: days >= 14 ? 'var(--danger)' : days >= 7 ? 'var(--warning)' : 'var(--ink)'}}>
+                  ${(days * form.fine_per_day).toFixed(2)}
+                </span>
+              </div>
+            ))}
+            <div style={{marginTop:16, padding:'12px', background:'var(--paper)', borderRadius:8}}>
+              <div className="text-xs text-muted mb-1">LOAN PERIOD</div>
+              <div style={{fontFamily:'Playfair Display, serif', fontSize:'1.2rem'}}>{form.loan_period_days} days</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== SIDEBAR + APP SHELL ====================
+const NAV_ITEMS = [
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', section: 'Overview' },
+  { id: 'books', label: 'Books Catalog', icon: 'book', section: 'Library' },
+  { id: 'categories', label: 'Categories', icon: 'tag', section: 'Library' },
+  { id: 'subjects', label: 'Subjects', icon: 'subject', section: 'Library' },
+  { id: 'checkout', label: 'Book Checkout', icon: 'bookOpen', section: 'Circulation' },
+  { id: 'return', label: 'Book Return', icon: 'transaction', section: 'Circulation' },
+  { id: 'transactions', label: 'History', icon: 'clock', section: 'Circulation' },
+  { id: 'members', label: 'Members', icon: 'users', section: 'People' },
+  { id: 'notes', label: 'Notes', icon: 'note', section: 'Tools' },
+  { id: 'settings', label: 'Settings', icon: 'settings', section: 'Tools' },
+];
+
+function App() {
+  const [page, setPage] = useState('dashboard');
+
+  const sections = [...new Set(NAV_ITEMS.map(n => n.section))];
+  const currentPage = NAV_ITEMS.find(n => n.id === page);
+  const titles = {
+    dashboard: 'Dashboard', books: 'Book Catalog', categories: 'Categories',
+    subjects: 'Subjects', checkout: 'Checkout', return: 'Returns',
+    transactions: 'Transaction History', members: 'Members',
+    notes: 'Librarian Notes', settings: 'Settings'
+  };
+
+  const pages = {
+    dashboard: <Dashboard/>, books: <Books/>, categories: <Categories/>,
+    subjects: <Subjects/>, checkout: <Checkout/>, return: <Return/>,
+    transactions: <Transactions/>, members: <Members/>,
+    notes: <Notes/>, settings: <Settings/>
+  };
+
+  return (
+    <AppProvider>
+      <div className="app">
+        <aside className="sidebar">
+          <div className="sidebar-logo">
+            <h1>Libraria</h1>
+            <p>Library Management</p>
+          </div>
+          <nav className="sidebar-nav">
+            {sections.map(sec => (
+              <div key={sec} className="nav-section">
+                <div className="nav-section-title">{sec}</div>
+                {NAV_ITEMS.filter(n => n.section === sec).map(item => (
+                  <div key={item.id} className={`nav-item ${page === item.id ? 'active' : ''}`}
+                    onClick={() => setPage(item.id)}>
+                    <Icon name={item.icon} size={17} className="icon"/>
+                    {item.label}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </nav>
+          <div className="sidebar-footer">
+            <div className="status-indicator">
+              <div className="status-dot"/>
+              <span>System Online</span>
+            </div>
+          </div>
+        </aside>
+
+        <main className="main">
+          <div className="topbar">
+            <div className="flex items-center gap-3">
+              <span className="topbar-title">{titles[page]}</span>
+            </div>
+            <div className="topbar-actions">
+              <span className="text-xs text-muted">{new Date().toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}</span>
+              <div className="topbar-sep"/>
+              <div style={{width:32, height:32, borderRadius:'50%', background:'var(--ink)', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--gold)', fontSize:'0.75rem', fontWeight:700}}>LM</div>
+            </div>
+          </div>
+          <div className="content">
+            <AppContent page={page}/>
+          </div>
+        </main>
+
+        <ToastContainer/>
+      </div>
+    </AppProvider>
+  );
+}
+
+function AppContent({ page }) {
+  const pages = {
+    dashboard: <Dashboard/>, books: <Books/>, categories: <Categories/>,
+    subjects: <Subjects/>, checkout: <Checkout/>, return: <Return/>,
+    transactions: <Transactions/>, members: <Members/>,
+    notes: <Notes/>, settings: <Settings/>
+  };
+  return pages[page] || <Dashboard/>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
